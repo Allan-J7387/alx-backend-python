@@ -1,11 +1,23 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
+from .models import Message
 
 @login_required
-def delete_user(request):
-    user = request.user
-    logout(request)       # log out before deleting
-    user.delete()         # triggers the post_delete signal
-    return redirect('login')  # or wherever you want to redirect
+def send_message(request, receiver_id):
+    receiver = get_object_or_404(User, id=receiver_id)
+
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        parent_id = request.POST.get('parent_message')
+        parent_message = Message.objects.filter(id=parent_id).first() if parent_id else None
+
+        Message.objects.create(
+            sender=request.user,
+            receiver=receiver,
+            content=content,
+            parent_message=parent_message
+        )
+        return redirect('inbox')  # or wherever you list messages
+
+    return render(request, 'messaging/send_message.html', {'receiver': receiver})
