@@ -18,20 +18,22 @@ def send_message(request, receiver_id):
             content=content,
             parent_message=parent_message
         )
-        return redirect('inbox')  # or wherever you list messages
+        return redirect('inbox')
 
     return render(request, 'messaging/send_message.html', {'receiver': receiver})
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Message
 
 @login_required
 def inbox(request):
     messages = (
         Message.objects
         .filter(receiver=request.user, parent_message__isnull=True)
-        .select_related('sender', 'receiver', 'edited_by')  # ✅ This is the required part
-        .prefetch_related('replies')  # For threaded conversations
+        .select_related('sender', 'receiver', 'edited_by')
+        .prefetch_related('replies')
         .order_by('-timestamp')
     )
     return render(request, 'messaging/inbox.html', {'messages': messages})
+
+@login_required
+def unread_messages(request):
+    messages = Message.unread.for_user(request.user)
+    return render(request, 'messaging/unread.html', {'messages': messages})
