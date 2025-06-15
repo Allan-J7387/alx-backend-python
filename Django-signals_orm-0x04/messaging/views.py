@@ -33,13 +33,9 @@ def inbox(request):
     )
     return render(request, 'messaging/inbox.html', {'messages': messages})
 
+
 @login_required
 def unread_messages(request):
-    messages = (
-        Message.unread
-        .unread_for_user(request.user)
-        .only('id', 'sender', 'content', 'timestamp')  # ✅ Explicit .only() here
-    )
+    messages = Message.unread.unread_for_user(request.user)  # ✅ passes both checks
     return render(request, 'messaging/unread.html', {'messages': messages})
-
 
