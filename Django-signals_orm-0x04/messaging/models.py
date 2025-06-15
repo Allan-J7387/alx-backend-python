@@ -6,22 +6,24 @@ class Message(models.Model):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    edited = models.BooleanField(default=False)  # tracks if it's edited
-    edited_by = models.ForeignKey(  # who edited the message
+    edited = models.BooleanField(default=False)
+    edited_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='edited_messages'
     )
+    parent_message = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='replies'
+    )  # New: threaded replies
 
     def __str__(self):
-        return f'Message from {self.sender} to {self.receiver}'
+        return f'Message #{self.id} from {self.sender} to {self.receiver}'
 
-class MessageHistory(models.Model):
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
-    old_content = models.TextField()
-    edited_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'Edit of Message ID {self.message.id} at {self.edited_at}'
+    def is_reply(self):
+        return self.parent_message is not None
