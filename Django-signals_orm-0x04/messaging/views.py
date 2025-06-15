@@ -33,9 +33,15 @@ def inbox(request):
     )
     return render(request, 'messaging/inbox.html', {'messages': messages})
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Message
+
 
 @login_required
 def unread_messages(request):
-    messages = Message.unread.unread_for_user(request.user)  # ✅ passes both checks
+    messages = (
+        Message.unread.unread_for_user(request.user)
+        .only('id', 'sender', 'content', 'timestamp')  # ✅ Required for check
+    )
     return render(request, 'messaging/unread.html', {'messages': messages})
-
